@@ -1,0 +1,113 @@
+/*
+ * Compilation:
+ * mkimage -f fit_kernel_dtb.its fit_kernel_dtb.itb
+ *
+ */
+
+/dts-v1/;
+/ {
+	description = "U-Boot FIT for x5";
+	#address-cells = <1>;
+
+	images {
+		kernel {
+			description = "Linux kernel";
+			data = /incbin/("Image.lz4");
+			type = "kernel";
+			arch = "arm64";
+			os = "linux";
+			compression = "lz4";
+			load = <0x84000000>;
+			entry = <0x84000000>;
+			/*
+			hash-1 {
+				algo = "sha1";
+			};
+			*/
+		};
+
+		fdt1 {
+			description = "FDT-FPGA";
+			data = /incbin/("x5-fpga.dtb");
+			type = "flat_dt";
+			arch = "arm64";
+			compression = "none";
+			/*
+			hash-1 {
+				algo = "sha1";
+			};
+			*/
+		};
+
+		fdt2 {
+			description = "FDT-SOM";
+			data = /incbin/("x5-som.dtb");
+			type = "flat_dt";
+			arch = "arm64";
+			compression = "none";
+			/*
+			hash-1 {
+				algo = "sha1";
+			};
+			*/
+		};
+
+		fdt3 {
+			description = "FDT-SVB";
+			data = /incbin/("x5-svb.dtb");
+			type = "flat_dt";
+			arch = "arm64";
+			compression = "none";
+		};
+
+		fdt4 {
+			description = "FDT-EVB";
+			data = /incbin/("x5-evb.dtb");
+			type = "flat_dt";
+			arch = "arm64";
+			compression = "none";
+		};
+
+		fdt5 {
+			description = "FDT-EVB-V2";
+			data = /incbin/("x5-evb-v2.dtb");
+			type = "flat_dt";
+			arch = "arm64";
+			compression = "none";
+		};
+	};
+
+	configurations {
+		default = "boardid-0x0201";
+
+		boardid-0xFFFF {
+			description = "x5-fpga";
+			kernel = "kernel";
+			fdt = "fdt1";
+		};
+
+		boardid-0xFE01 {
+			description = "x5-som";
+			kernel = "kernel";
+			fdt = "fdt2";
+		};
+
+		boardid-0xFF10 {
+			description = "x5-svb";
+			kernel = "kernel";
+			fdt = "fdt3";
+		};
+
+		boardid-0x0201 {
+			description = "x5-evb";
+			kernel = "kernel";
+			fdt = "fdt4";
+		};
+
+		boardid-0x0202 {
+			description = "x5-evb-v2";
+			kernel = "kernel";
+			fdt = "fdt5";
+		};
+	};
+};

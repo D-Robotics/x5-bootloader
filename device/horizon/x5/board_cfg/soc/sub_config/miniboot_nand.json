@@ -1,0 +1,14 @@
+{
+	"Note": "Miniboot partition configuration information, please do not modify it.",
+	"miniboot": {
+		"bl2": {
+			"size": "256k"
+		},
+		"bl3x": {
+			"size": "1m"
+		},
+		"size": "1280k",
+		"part_type": "GOLDEN",
+		"medium": "nand"
+	}
+}

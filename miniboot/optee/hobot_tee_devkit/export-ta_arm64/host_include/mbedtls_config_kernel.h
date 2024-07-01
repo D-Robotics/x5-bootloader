@@ -1,0 +1,273 @@
+/* SPDX-License-Identifier: BSD-2-Clause */
+/* Copyright (c) 2018, Linaro Limited */
+#ifndef __MBEDTLS_CONFIG_KERNEL_H
+#define __MBEDTLS_CONFIG_KERNEL_H
+
+#ifndef CFG_MBEDTLS_TE
+#ifdef ARM32
+#define MBEDTLS_HAVE_INT32
+#endif
+#ifdef ARM64
+#define MBEDTLS_HAVE_INT64
+#endif
+#define MBEDTLS_BIGNUM_C
+#define MBEDTLS_GENPRIME
+#endif
+
+/* Test if Mbedtls is the primary crypto lib */
+#if defined(CFG_CRYPTOLIB_NAME_mbedtls) || defined(CFG_MBEDTLS_SELFTEST)
+
+#if defined(CFG_CRYPTO_MD5)
+#define MBEDTLS_MD5_C
+#define MBEDTLS_MD_C
+#endif
+
+#if defined(CFG_CRYPTO_SHA1)
+#define MBEDTLS_SHA1_C
+#define MBEDTLS_MD_C
+#if defined(CFG_CORE_CRYPTO_SHA1_ACCEL)
+#define MBEDTLS_SHA1_PROCESS_ALT
+#endif
+#endif
+
+#if defined(CFG_CRYPTO_SHA224) || defined(CFG_CRYPTO_SHA256)
+#define MBEDTLS_SHA256_C
+#define MBEDTLS_MD_C
+#if defined(CFG_CORE_CRYPTO_SHA256_ACCEL)
+#define MBEDTLS_SHA256_PROCESS_ALT
+#endif
+#endif
+
+#if defined(CFG_CRYPTO_SHA384) || defined(CFG_CRYPTO_SHA512)
+#define MBEDTLS_SHA512_C
+#define MBEDTLS_MD_C
+#if defined(CFG_CORE_CRYPTO_SHA512_ACCEL)
+#define MBEDTLS_SHA512_PROCESS_ALT
+#endif
+#endif
+
+#if defined(CFG_CRYPTO_HMAC)
+#define MBEDTLS_MD_C
+#endif
+
+#if defined(CFG_CRYPTO_AES)
+#define MBEDTLS_AES_C
+#define MBEDTLS_AES_ROM_TABLES
+#if defined(CFG_CORE_CRYPTO_AES_ACCEL)
+#define MBEDTLS_AES_ALT
+#endif
+#endif
+
+#if defined(CFG_CRYPTO_DES)
+#define MBEDTLS_DES_C
+#endif
+
+#if defined(CFG_CRYPTO_CBC)
+#define MBEDTLS_CIPHER_MODE_CBC
+#endif
+
+#if defined(CFG_CRYPTO_CTR)
+#define MBEDTLS_CIPHER_MODE_CTR
+#endif
+
+#if defined(CFG_CRYPTO_CMAC)
+#define MBEDTLS_CMAC_C
+#define MBEDTLS_CIPHER_C
+#endif
+
+#if defined(CFG_CRYPTO_RSA) || defined(CFG_CRYPTO_DH) || \
+    defined(CFG_CRYPTO_ECC) || defined(CFG_CRYPTO_DSA)
+#define MBEDTLS_BIGNUM_C
+#define MBEDTLS_OID_C
+#define MBEDTLS_PKCS1_V15
+#define MBEDTLS_PKCS1_V21
+#define MBEDTLS_PK_C
+#define MBEDTLS_GENPRIME
+#define MBEDTLS_CTR_DRBG_C
+#endif
+
+#if defined(CFG_CRYPTO_RSA)
+#define MBEDTLS_RSA_C
+#define MBEDTLS_RSA_NO_CRT
+#endif
+
+#if defined(CFG_CRYPTO_RSA) || defined(CFG_CRYPTO_ECC)
+#define MBEDTLS_ASN1_PARSE_C
+#define MBEDTLS_ASN1_WRITE_C
+#endif
+
+#if defined(CFG_CRYPTO_DH)
+#define MBEDTLS_DHM_C
+#endif
+
+#if defined(CFG_CRYPTO_ECC)
+#define MBEDTLS_ECP_DP_SECP192R1_ENABLED
+#define MBEDTLS_ECP_DP_SECP224R1_ENABLED
+#define MBEDTLS_ECP_DP_SECP256R1_ENABLED
+#define MBEDTLS_ECP_DP_SECP384R1_ENABLED
+#define MBEDTLS_ECP_DP_SECP521R1_ENABLED
+#define MBEDTLS_ECP_DP_SECP192K1_ENABLED
+#define MBEDTLS_ECP_DP_SECP224K1_ENABLED
+#define MBEDTLS_ECP_DP_SECP256K1_ENABLED
+#define MBEDTLS_ECP_DP_BP256R1_ENABLED
+#define MBEDTLS_ECP_DP_BP384R1_ENABLED
+#define MBEDTLS_ECP_DP_BP512R1_ENABLED
+#define MBEDTLS_ECP_DP_SM2P256V1_ENABLED
+#define MBEDTLS_ECP_C
+#define MBEDTLS_ECDSA_C
+#define MBEDTLS_ECDH_C
+#define MBEDTLS_ECDH_LEGACY_CONTEXT
+#if defined(CFG_CRYPTO_DSA) || defined(CFG_CRYPTO_SM2_PKE) || \
+	defined(CFG_CRYPTO_SM2_KEP)
+#define MBEDTLS_ECP_DP_SM2_ENABLED
+#endif
+#endif
+
+/* for mbedtls test */
+#if defined(CFG_MBEDTLS_TEST)
+#define MBEDTLS_ECDSA_DETERMINISTIC
+#define MBEDTLS_PKCS5_C
+#define MBEDTLS_ECJPAKE_C
+#define MBEDTLS_PK_PARSE_C
+#define MBEDTLS_CIPHER_MODE_OFB
+#define MBEDTLS_CIPHER_PADDING_PKCS7
+#define MBEDTLS_CIPHER_PADDING_ONE_AND_ZEROS
+#define MBEDTLS_CIPHER_PADDING_ZEROS_AND_LEN
+#define MBEDTLS_CIPHER_PADDING_ZEROS
+#endif
+
+#if defined(CFG_CRYPTO_DSA)
+#define MBEDTLS_DSA_C
+#endif
+
+#if defined(CFG_MBEDTLS_TE)
+
+#if defined(CFG_CRYPTO_XTS)
+#define MBEDTLS_CIPHER_MODE_XTS
+#endif
+
+#if defined(CFG_CRYPTO_SM4)
+#define MBEDTLS_SM4_C
+#endif
+
+#if defined(CFG_CRYPTO_KASUMI)
+#define MBEDTLS_KASUMI_C
+#endif
+
+#if defined(CFG_CRYPTO_SNOW3G)
+#define MBEDTLS_SNOW3G_C
+#endif
+
+#if defined(CFG_CRYPTO_ZUC)
+#define MBEDTLS_ZUC_C
+#endif
+
+#if defined(CFG_CRYPTO_GCM)
+#define MBEDTLS_GCM_C
+#endif
+
+#if defined(CFG_CRYPTO_CCM)
+#define MBEDTLS_CCM_C
+#endif
+
+#if defined(CFG_CRYPTO_SM3)
+#define MBEDTLS_SM3_C
+#define MBEDTLS_MD_C
+#endif
+
+#if defined(CFG_CRYPTO_HMAC)
+#define MBEDTLS_HMAC_C
+#endif
+
+#if defined(CFG_CRYPTO_SM2_PKE)
+#define MBEDTLS_SM2PKE_C
+#endif
+
+#if defined(CFG_CRYPTO_SM2_DSA)
+#define MBEDTLS_SM2DSA_C
+#define MBEDTLS_SM2DSA_DETERMINISTIC
+#endif
+
+#if defined(CFG_CRYPTO_SM2_KEP)
+#define MBEDTLS_SM2KEP_C
+#endif
+
+#if defined(MBEDTLS_ECDSA_DETERMINISTIC) || \
+    defined(MBEDTLS_SM2DSA_DETERMINISTIC)
+#define MBEDTLS_HMAC_DRBG_C
+#endif
+
+#define MBEDTLS_CHECK_PARAMS
+#define MBEDTLS_ENTROPY_C
+#define MBEDTLS_NO_PLATFORM_ENTROPY
+#define MBEDTLS_PLATFORM_C
+#define MBEDTLS_OTP_C
+
+/* ALT options */
+#define MBEDTLS_PLATFORM_SETUP_TEARDOWN_ALT
+#define MBEDTLS_ENTROPY_HARDWARE_ALT
+#define MBEDTLS_OTP_ALT
+#define MBEDTLS_PLATFORM_PRINTF_ALT
+
+#define MBEDTLS_AES_ALT
+#define MBEDTLS_DES_ALT
+#define MBEDTLS_SM4_ALT
+#define MBEDTLS_KASUMI_ALT
+#define MBEDTLS_SNOW3G_ALT
+#define MBEDTLS_ZUC_ALT
+
+#define MBEDTLS_CCM_ALT
+#define MBEDTLS_GCM_ALT
+
+#define MBEDTLS_CMAC_ALT
+#define MBEDTLS_HMAC_ALT
+
+#define MBEDTLS_MD5_ALT
+#define MBEDTLS_SHA1_ALT
+#define MBEDTLS_SHA256_ALT
+#define MBEDTLS_SHA512_ALT
+#define MBEDTLS_SM3_ALT
+
+#define MBEDTLS_MD5_PROCESS_ALT
+#define MBEDTLS_SHA1_PROCESS_ALT
+#define MBEDTLS_SHA256_PROCESS_ALT
+#define MBEDTLS_SHA512_PROCESS_ALT
+#define MBEDTLS_DES_SETKEY_ALT
+#define MBEDTLS_DES_CRYPT_ECB_ALT
+#define MBEDTLS_DES3_CRYPT_ECB_ALT
+#define MBEDTLS_AES_SETKEY_ENC_ALT
+#define MBEDTLS_AES_SETKEY_DEC_ALT
+#define MBEDTLS_AES_ENCRYPT_ALT
+#define MBEDTLS_AES_DECRYPT_ALT
+#define MBEDTLS_SM4_SETKEY_ENC_ALT
+#define MBEDTLS_SM4_SETKEY_DEC_ALT
+#define MBEDTLS_SM4_ENCRYPT_ALT
+#define MBEDTLS_SM4_DECRYPT_ALT
+
+#define MBEDTLS_BIGNUM_ALT
+#define MBEDTLS_DHM_ALT
+#define MBEDTLS_ECP_ALT
+#define MBEDTLS_ECDH_GEN_PUBLIC_ALT
+#define MBEDTLS_ECDH_COMPUTE_SHARED_ALT
+#define MBEDTLS_ECDSA_SIGN_ALT
+#define MBEDTLS_ECDSA_VERIFY_ALT
+#define MBEDTLS_ECDSA_GENKEY_ALT
+#define MBEDTLS_RSA_ALT
+#define MBEDTLS_SM2DSA_SIGN_ALT
+#define MBEDTLS_SM2DSA_VERIFY_ALT
+#define MBEDTLS_SM2DSA_GENKEY_ALT
+
+#define MBEDTLS_SM2KEP_GEN_PUBLIC_ALT
+#define MBEDTLS_SM2KEP_COMPUTE_SHARED_ALT
+
+#define MBEDTLS_DSA_GENKEY_ALT
+#define MBEDTLS_DSA_SIGN_ALT
+#define MBEDTLS_DSA_VERIFY_ALT
+
+#endif /*CFG_MBEDTLS_TE*/
+
+#endif /*CFG_CRYPTOLIB_NAME_mbedtls || CFG_MBEDTLS_SELFTEST*/
+
+#include <mbedtls/check_config.h>
+
+#endif /* __MBEDTLS_CONFIG_KERNEL_H */
