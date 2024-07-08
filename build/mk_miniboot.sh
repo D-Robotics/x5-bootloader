@@ -59,9 +59,13 @@ function mk_bl2
 	if [ -n "${NO_SECURE}" ] && [ "${NO_SECURE}" = "y" ];then
 		cp "${MINIBOOT_SOURCE_DIR}/bl2/ns/bl2_fip_ns.bin" "${MINIBOOT_TARGET_DEPLOY_DIR}/bl2.img"
 		cp "${MINIBOOT_SOURCE_DIR}/bl2/ns/bl2_uart_fip_ns.bin" "${MINIBOOT_TARGET_DEPLOY_DIR}/bl2_uart.img"
+		cp "${MINIBOOT_SOURCE_DIR}/bl2/ns/bl2_usb2_fip_ns.bin" "${MINIBOOT_TARGET_DEPLOY_DIR}/bl2_usb2.img"
+		cp "${MINIBOOT_SOURCE_DIR}/bl2/ns/bl2_usb3_fip_ns.bin" "${MINIBOOT_TARGET_DEPLOY_DIR}/bl2_usb3.img"
 	else
 		cp "${MINIBOOT_SOURCE_DIR}/bl2/bl2_fip.bin" "${MINIBOOT_TARGET_DEPLOY_DIR}/bl2.img"
 		cp "${MINIBOOT_SOURCE_DIR}/bl2/bl2_uart_fip.bin" "${MINIBOOT_TARGET_DEPLOY_DIR}/bl2_uart.img"
+		cp "${MINIBOOT_SOURCE_DIR}/bl2/bl2_usb2_fip.bin" "${MINIBOOT_TARGET_DEPLOY_DIR}/bl2_usb2.img"
+		cp "${MINIBOOT_SOURCE_DIR}/bl2/bl2_usb3_fip.bin" "${MINIBOOT_TARGET_DEPLOY_DIR}/bl2_usb3.img"
 	fi
 }
 

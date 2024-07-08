@@ -23,38 +23,39 @@ function pack_uart_usb_img()
 	# image 1: bl2 fip (256k align) + other fip(ddr + bl2 cfg)
 	# image 2: all bl3x, bl31 + bl32 + bl33
 	mkdir -p ${uart_usb_dir}
+	${fip_tool} create \
+		--ddr-fw "${bl3x_out_dir}"/bl2_ddr.bin  \
+		--ddr-fw-key-cert "${bl3x_out_dir}"/bl2_ddr_key.cert  \
+		--ddr-fw-cert "${bl3x_out_dir}"/bl2_ddr.cert  \
+		--trusted-key-cert "${uboot_out_dir}"/trusted_key.crt \
+		--nt-fw-cert "${uboot_out_dir}"/nt_fw_content.crt \
+		--nt-fw-key-cert "${uboot_out_dir}"/nt_fw_key.crt \
+		--hb-bl2-cfg "${uboot_out_dir}"/bl2_cfg.bin \
+		"${uart_usb_dir}"/ddr.bin || {
+			echo "[ERROE]: ddr.bin package failed"
+			exit 1
+		}
+
+	# normal bl2 + ddr + bl2_cfg
 	cp ${bl2_out_dir}/bl2.img ${uart_usb_dir}/bl2_ddr.bin
 	truncate -s 256K ${uart_usb_dir}/bl2_ddr.bin
-	${fip_tool} create \
-		--ddr-fw "${bl3x_out_dir}"/bl2_ddr.bin  \
-		--ddr-fw-key-cert "${bl3x_out_dir}"/bl2_ddr_key.cert  \
-		--ddr-fw-cert "${bl3x_out_dir}"/bl2_ddr.cert  \
-		--trusted-key-cert "${uboot_out_dir}"/trusted_key.crt \
-		--nt-fw-cert "${uboot_out_dir}"/nt_fw_content.crt \
-		--nt-fw-key-cert "${uboot_out_dir}"/nt_fw_key.crt \
-		--hb-bl2-cfg "${uboot_out_dir}"/bl2_cfg.bin \
-		"${uart_usb_dir}"/ddr.bin || {
-			echo "[ERROE]: ddr.bin package failed"
-			exit 1
-		}
 	cat ${uart_usb_dir}/ddr.bin >>${uart_usb_dir}/bl2_ddr.bin
-	rm ${uart_usb_dir}/ddr.bin
 
+	# uart bl2 + ddr + bl2_cfg
 	cp ${bl2_out_dir}/bl2_uart.img ${uart_usb_dir}/bl2_uart_ddr.bin
 	truncate -s 256K ${uart_usb_dir}/bl2_uart_ddr.bin
-	${fip_tool} create \
-		--ddr-fw "${bl3x_out_dir}"/bl2_ddr.bin  \
-		--ddr-fw-key-cert "${bl3x_out_dir}"/bl2_ddr_key.cert  \
-		--ddr-fw-cert "${bl3x_out_dir}"/bl2_ddr.cert  \
-		--trusted-key-cert "${uboot_out_dir}"/trusted_key.crt \
-		--nt-fw-cert "${uboot_out_dir}"/nt_fw_content.crt \
-		--nt-fw-key-cert "${uboot_out_dir}"/nt_fw_key.crt \
-		--hb-bl2-cfg "${uboot_out_dir}"/bl2_cfg.bin \
-		"${uart_usb_dir}"/ddr.bin || {
-			echo "[ERROE]: ddr.bin package failed"
-			exit 1
-		}
 	cat ${uart_usb_dir}/ddr.bin >>${uart_usb_dir}/bl2_uart_ddr.bin
+
+	# usb2 bl2 + ddr + bl2_cfg
+	cp ${bl2_out_dir}/bl2_usb2.img ${uart_usb_dir}/bl2_usb2_ddr.bin
+	truncate -s 256K ${uart_usb_dir}/bl2_usb2_ddr.bin
+	cat ${uart_usb_dir}/ddr.bin >>${uart_usb_dir}/bl2_usb2_ddr.bin
+
+	# usb3 bl2 + ddr + bl2_cfg
+	cp ${bl2_out_dir}/bl2_usb3.img ${uart_usb_dir}/bl2_usb3_ddr.bin
+	truncate -s 256K ${uart_usb_dir}/bl2_usb3_ddr.bin
+	cat ${uart_usb_dir}/ddr.bin >>${uart_usb_dir}/bl2_usb3_ddr.bin
+
 	rm ${uart_usb_dir}/ddr.bin
 
 	${fip_tool} create \
