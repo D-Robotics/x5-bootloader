@@ -4,7 +4,7 @@ export HR_TARGET_VENDOR="horizon"
 export HR_TARGET_CHIP="x5"
 export HR_SECURE_CHIP=y
 export HR_TARGET_BIT="64"
-export HR_TARGET_MODE="release"
+export HR_TARGET_MODE="debug"
 
 # 板级名称，对应每一个新的硬件型号
 export HR_BOARD_TYPE="soc"
@@ -44,14 +44,14 @@ export HR_AVB_TOOLS_PATH=${HR_TOP_DIR}/build/tools/android_tools/avbtools
 export HR_BD_IMG_TOOLS_PATH=${HR_TOP_DIR}/build/tools/android_tools/build_image
 
 # 分区表配置文件所在目录和文件名
-export HR_PART_CONF_FILENAME=${HR_BOARD_CONF_DIR}/rdk-x5-ubuntu-nand-gpt.json
+export HR_PART_CONF_FILENAME=${HR_BOARD_CONF_DIR}/x5-evb-ubuntu-nand-gpt.json
 export BLK_SZ=512
 export NAND_ERASE_SIZE=262144
 export NAND_PAGE_SIZE=4096
 export NAND_SIZE=$((128 * 1024 * 1024))
 
 # uboot 编译配置文件
-export HR_UBOOT_CONFIG_FILE=hobot_x5_rdk_nand_defconfig
+export HR_UBOOT_CONFIG_FILE=hobot_x5_evb_nand_sd_defconfig
 export HR_ARCH_UBOOT="arm"
 # 指定uboot源码的输出目录，如果不设置，则在源码目录下编译
 export HR_UBOOT_OUTPUT_DIR=${HR_TARGET_BUILD_DIR}/uboot

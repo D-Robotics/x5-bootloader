@@ -1,0 +1,16 @@
+{
+	"mbr": {
+		"size": "256k",
+		"medium": "nand"
+	},
+	"miniboot": "sub_config/miniboot_nand.json",
+	"misc": {
+		"size": "256k",
+		"medium": "nand"
+	},
+	"uboot": {
+		"part_type": "GOLDEN",
+		"size": "2m",
+		"medium": "nand"
+	}
+}

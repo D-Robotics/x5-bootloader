@@ -1,1 +1,0 @@
-horizon/x5/board_rdk_x5_ubuntu_nand_sdcard_release_config.mk
