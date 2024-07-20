@@ -41,4 +41,5 @@ deploy_*
 
 uboot/
 out
+device/.board_config.mk
 
