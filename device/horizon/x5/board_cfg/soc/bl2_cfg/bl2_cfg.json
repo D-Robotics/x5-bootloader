@@ -17,7 +17,8 @@
             "rank_type": "single"
         },
         "ecc_enabled": "false",
-        "freq": "default"
+        "freq": "default",
+        "diag_test": "false"
     },
       "efuse_cfg": {
         "bypass": 1,
@@ -28,6 +29,11 @@
             "gpio_sub": "none",
             "gpio_group": 0,
             "gpio_num": 0
+        },
+        "nonsecure_bank": {
+            "bank11":["0x0"],
+            "bank12":["0x0"],
+            "bank13":["0x0"]
         },
         "delay_before_efuse": 0,
         "delay_after_efuse": 0

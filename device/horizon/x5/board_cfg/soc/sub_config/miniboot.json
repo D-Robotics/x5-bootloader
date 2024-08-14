@@ -5,9 +5,9 @@
 			"size": "256k"
 		},
 		"bl3x": {
-			"size": "1m"
+			"size": "2m"
 		},
-		"size": "1280k",
+		"size": "2304k",
 		"part_type": "BAK",
 		"ota_is_update": true,
 		"ota_update_mode": "image"
