@@ -200,11 +200,11 @@ function truncate_fill_image
 
 function build_pack
 {
-	local emmc_raw_img=${HR_TARGET_PRODUCT_DIR}/emmc_disk.img
-	local emmc_sparse_img=${HR_TARGET_PRODUCT_DIR}/emmc_disk.simg
-	local flash_raw_img=${HR_TARGET_PRODUCT_DIR}/flash_disk.img
-	local nand_raw_img=${HR_TARGET_PRODUCT_DIR}/nand_disk.img
-	local nor_raw_img=${HR_TARGET_PRODUCT_DIR}/nor_disk.img
+	local emmc_raw_img=${HR_TARGET_PRODUCT_DIR}/miniboot_emmc_disk.img
+	local emmc_sparse_img=${HR_TARGET_PRODUCT_DIR}/miniboot_emmc_disk.simg
+	local flash_raw_img=${HR_TARGET_PRODUCT_DIR}/miniboot_flash_disk.img
+	local nand_raw_img=${HR_TARGET_PRODUCT_DIR}/miniboot_nand_disk.img
+	local nor_raw_img=${HR_TARGET_PRODUCT_DIR}/miniboot_nor_disk.img
 
 
 	if [ "$1" = "all" ]; then
