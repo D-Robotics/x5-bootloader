@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export HR_TARGET_VENDOR="horizon"
+export HR_TARGET_VENDOR="rdk"
 export HR_TARGET_CHIP="x5"
 export HR_SECURE_CHIP=y
 export HR_TARGET_BIT="64"
@@ -22,7 +22,7 @@ export HR_TARGET_DEPLOY_DIR=${HR_BUILD_OUTPUT_DIR}/deploy
 export HR_BUILD_LOG_DIR=${HR_BUILD_OUTPUT_DIR}/build_log
 
 # 板级配置文件存放目录
-export HR_BOARD_CONF_DIR=${HR_TOP_DIR}/"device/horizon/${HR_TARGET_CHIP}/board_cfg/${HR_BOARD_TYPE}"
+export HR_BOARD_CONF_DIR=${HR_TOP_DIR}/"device/rdk/${HR_TARGET_CHIP}/board_cfg/${HR_BOARD_TYPE}"
 
 # 配置交叉编译工具链
 export ARCH="arm64"
