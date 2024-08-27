@@ -244,7 +244,8 @@ function build_pack
 					;;
 			esac
 			medium=$(get_part_attr "${part_name}" medium)
-			if [ "${part_name}" = "boot" ]; then
+			if [ "${part_name}" = "boot" ] || [ "${part_name}" = "boot_a" ] ||
+			 [ "${part_name}" = "ubootenv" ]; then
 				if [ "${medium}" = "nand" ] || [ "${medium}" = "nor" ];then
 					"${HR_PARTITION_TOOL_PATH}"/mk_ubifs.sh "${part_name}" ""
 				fi
@@ -265,9 +266,9 @@ function build_pack
 		fi
 
 		if [ "${medium}" = "nand" ];then
-			mv "${flash_raw_img}" "${nand_raw_img}"
+			mv -v "${flash_raw_img}" "${nand_raw_img}"
 		elif [ "${medium}" = "nor" ];then
-			mv "${flash_raw_img}" "${nor_raw_img}"
+			mv -v "${flash_raw_img}" "${nor_raw_img}"
 		fi
 
 		echo "**********************************************************************"

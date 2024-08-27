@@ -235,7 +235,7 @@ function get_part_attr()
 
 function strip_elf() {
 	local ori_dir=$1
-	for f in $(find ${ori_dir}/ -type f -print | grep -v ".ko"); do
+	for f in $(find ${ori_dir}/ -type f -print | grep -v ".ko" | grep -v "firmware"); do
 		fm=$(file $f)
 		slim=${fm##*, }
 		if [ "${slim}" = "not stripped" ]; then

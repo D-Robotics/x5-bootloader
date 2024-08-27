@@ -17,7 +17,7 @@ check_board_config "${@:1}"
 mkdir -p ${HR_TARGET_BUILD_DIR} ${HR_TARGET_PRODUCT_DIR} ${HR_TARGET_DEPLOY_DIR}
 
 # 使用CPU核心数量减去2的线程数去编译
-N=$(( ($(cat /proc/cpuinfo |grep 'processor'|wc -l)  + 1 ) - 2 ))
+[ $(cat /proc/cpuinfo |grep 'processor'|wc -l) -gt 2 ] && N="$((($(cat /proc/cpuinfo |grep 'processor'|wc -l)) - 2))" || N=1
 
 uboot_config_file=${HR_UBOOT_CONFIG_FILE}
 UBOOT_SRC_DIR=${HR_TOP_DIR}/uboot
@@ -125,6 +125,9 @@ function build_all()
 
 function pack_uboot_full()
 {
+	part_type=$(get_part_attr uboot part_type)
+	part_size=$(get_part_attr uboot size)
+
 	out_img=${HR_TARGET_PRODUCT_DIR}/uboot_all.img
 
 	echo "[INFO]: Pack uboot_all image to ${out_img}"
@@ -134,11 +137,15 @@ function pack_uboot_full()
 		exit 1
 	fi
 	rm -f "${out_img}"
-
+	truncate -s "${part_size}" "${HR_TARGET_PRODUCT_DIR}/uboot.img"
 	echo "[INFO]: uboot_all.img: "${HR_TARGET_PRODUCT_DIR}/miniboot_all.img" > ${out_img}"
 	cat "${HR_TARGET_PRODUCT_DIR}/miniboot_all.img" > "${out_img}"
 	echo "[INFO]: uboot_all.img: "${HR_TARGET_PRODUCT_DIR}/uboot.img" >> ${out_img}"
 	cat "${HR_TARGET_PRODUCT_DIR}/uboot.img" >> "${out_img}"
+	if [ "${part_type}" = "AB" ] || [ "${part_type}" = "BAK" ]; then
+		echo "[INFO]: uboot_all.img: "${HR_TARGET_PRODUCT_DIR}/uboot.img" >> ${out_img}"
+		cat "${HR_TARGET_PRODUCT_DIR}/uboot.img" >> "${out_img}"
+	fi
 }
 
 function build_clean()

@@ -13,9 +13,9 @@ import os
 
 bl2_offset = struct.calcsize("QIIIIIIIII")
 bl2_feature_size = struct.calcsize("QII160s")
-ddr_input_size = struct.calcsize("6I")
+ddr_input_size = struct.calcsize("7I")
 efuse_data_size = struct.calcsize("II")
-efuse_cfg_size = struct.calcsize("QIIIIIIIIIII16sBBBBBBBBIi")
+efuse_cfg_size = struct.calcsize("QIIIIIIIIIII16sBBBBBBBBIi6I")
 socid_size = 16 * 100
 
 
@@ -200,6 +200,8 @@ def get_ddr_info(data):
 
     ecc_enabled = convert_en(data['bl2_cfg']['ddr']['ecc_enabled'])
 
+    diag_test = convert_en(data['bl2_cfg']['ddr']['diag_test'])
+
     freq_data = data['bl2_cfg']['ddr']['freq']
     if isinstance(freq_data, str):
         if freq_data == "default":
@@ -231,7 +233,58 @@ def get_ddr_info(data):
                 ddr_freq = 3733
                 ecc_enabled = 0
 
-    return ddr_adc_en, ddr_type, rank_type, ddr_freq, ecc_enabled
+    return ddr_adc_en, ddr_type, rank_type, ddr_freq, ecc_enabled, diag_test
+
+
+def save_hash_words_to_file(key_data, output_file):
+
+    # Ensure we work with a list of 4-byte chunks (or less for the last chunk)
+    chunks = [key_data[i:i+4] for i in range(0, len(key_data), 4)]
+    chunks = [chunk[::-1] for chunk in chunks]
+    # Open the output file for writing
+    with open(output_file, "w") as file_obj:
+        for index, chunk in enumerate(chunks):
+            # Convert the chunk to a hexadecimal string (without "0x" prefix)
+            hex_str = ''.join(f'{byte:02x}' for byte in chunk).lower()
+            # Write the line with the prefix "public key hash[index]:"
+            file_obj.write(f"public key hash[{index}]: 0x{hex_str}\n")
+
+
+def parse_bank_lock(value):
+    if not value[0].startswith('0x'):
+        print("non secure bank value should start with 0x")
+        exit(1)
+    if value[0].lower() == '0x0':
+        return 0
+    return 1
+
+
+def parse_nonsecure_efuse(data):
+    bank11 = None
+    bank12 = None
+    bank13 = None
+    bank11_lock = None
+    bank12_lock = None
+    bank13_lock = None
+
+    bank_str = data['bl2_cfg']['efuse_cfg']['nonsecure_bank']['bank11']
+    bank11 = int(bank_str[0], 16)
+    bank11_lock = parse_bank_lock(bank_str)
+
+    bank_str = data['bl2_cfg']['efuse_cfg']['nonsecure_bank']['bank12']
+    bank12 = int(bank_str[0], 16)
+    bank12_lock = parse_bank_lock(bank_str)
+
+    bank_str = data['bl2_cfg']['efuse_cfg']['nonsecure_bank']['bank13']
+    bank13 = int(bank_str[0], 16)
+    bank13_lock = parse_bank_lock(bank_str)
+
+    non_secure_bank = struct.pack(
+                                '6I',
+                                bank11, bank11_lock,
+                                bank12, bank12_lock,
+                                bank13, bank13_lock)
+    return non_secure_bank
 
 
 def generate_binary_from_json(input_file, key_file, user_rot_key_file,
@@ -270,6 +323,11 @@ def generate_binary_from_json(input_file, key_file, user_rot_key_file,
     delay_after = data['bl2_cfg']['efuse_cfg']['delay_after_efuse']
 
     key_hash = calculate_public_key_hash(key_file)
+
+    directory_path = os.path.dirname(output_file)
+    hash_file = os.path.join(directory_path, 'pubkey-hash.txt')
+    save_hash_words_to_file(key_hash, hash_file)
+
     if sec_en == 1:
         key_hash = calculate_public_key_hash(key_file)
     else:
@@ -283,10 +341,13 @@ def generate_binary_from_json(input_file, key_file, user_rot_key_file,
 
     key_hash_values = struct.unpack("<IIIIIIII", key_hash)
 
-    ddr_adc_en, ddr_type, rank_type, ddr_freq, ecc_enabled = get_ddr_info(data)
+    cus_non_secure = struct.unpack("6I", parse_nonsecure_efuse(data))
+
+    ddr_adc_en, ddr_type, rank_type, ddr_freq, ecc_enabled, diag_test = \
+        get_ddr_info(data)
 
     bl2_cfg_data = struct.pack("<QIIIIIIIIIQII160sQIIIIIIIIIII16sBBBBBBBBIi"
-                               "6I",
+                               "6I7I",
                                int.from_bytes(b"HBBL2CFG", byteorder='little'),
                                0,  # Placeholder for checksum
                                feature_offset,
@@ -311,18 +372,20 @@ def generate_binary_from_json(input_file, key_file, user_rot_key_file,
                                *status_gpio,
                                delay_before,
                                delay_after,
+                               *cus_non_secure,
                                ddr_adc_en,
                                data['bl2_cfg']['ddr']['detect']['adc_channel'],
                                ddr_type,
                                rank_type,
                                ddr_freq,
-                               ecc_enabled)
+                               ecc_enabled,
+                               diag_test)
 
     checksum = calculate_checksum(bl2_cfg_data)
     socid_file = "tmp_socid.bin"
     checksum += parse_socid(input_file, socid_file)
     bl2_cfg_data = struct.pack("<QIIIIIIIIIQII160sQIIIIIIIIIII16sBBBBBBBBIi"
-                               "6I",
+                               "6I7I",
                                int.from_bytes(b"HBBL2CFG", byteorder='little'),
                                checksum,  # Placeholder for checksum
                                feature_offset,
@@ -347,12 +410,14 @@ def generate_binary_from_json(input_file, key_file, user_rot_key_file,
                                *status_gpio,
                                delay_before,
                                delay_after,
+                               *cus_non_secure,
                                ddr_adc_en,
                                data['bl2_cfg']['ddr']['detect']['adc_channel'],
                                ddr_type,
                                rank_type,
                                ddr_freq,
-                               ecc_enabled)
+                               ecc_enabled,
+                               diag_test)
 
     with open(output_file, 'wb') as output_file_part:
         output_file_part.write(bl2_cfg_data)

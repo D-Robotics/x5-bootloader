@@ -75,8 +75,8 @@ class X5_MBR():
         if part_conf.get('uboot', None):
             self.uboot_a_addr = part_conf['uboot']['start'] - new_offset \
                 if part_conf.get('uboot', None) else 0
-            self.uboot_b_addr = part_conf['uboot']['start'] - new_offset \
-                if part_conf.get('uboot', None) else 0
+            self.uboot_b_addr = part_conf['uboot_bak1']['start'] - new_offset \
+                if part_conf.get('uboot_bak1', None) else 0
         else:
             self.uboot_a_addr = part_conf['uboot_a']['start'] - new_offset \
                 if part_conf.get('uboot_a', None) else 0
