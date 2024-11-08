@@ -221,6 +221,16 @@ function get_mtd_part_list() {
 	echo "${mtd_part_list}"
 }
 
+function get_part_exist()
+{
+	local part=$1
+	if ! result=$("${HR_PARTITION_TOOL_PATH}"/GPTParse.py -s "${part}:start"); then
+		echo "0"
+		return
+	fi
+	echo "1"
+}
+
 function get_part_attr()
 {
 	local part=$1

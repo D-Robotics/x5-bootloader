@@ -12,5 +12,9 @@
 		"part_type": "GOLDEN",
 		"size": "2m",
 		"medium": "nand"
+	},
+	"ubootenv": {
+		"size": "1536k",
+		"medium": "nand"
 	}
 }
