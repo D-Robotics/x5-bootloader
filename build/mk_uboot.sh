@@ -16,6 +16,9 @@ check_board_config "${@:1}"
 # 编译出来的镜像保存位置
 mkdir -p ${HR_TARGET_BUILD_DIR} ${HR_TARGET_PRODUCT_DIR} ${HR_TARGET_DEPLOY_DIR}
 
+# env配置文件路径
+ENV_FILE_PATH=${HR_TOP_DIR}/uboot/tools
+
 # 使用CPU核心数量减去2的线程数去编译
 [ $(cat /proc/cpuinfo |grep 'processor'|wc -l) -gt 2 ] && N="$((($(cat /proc/cpuinfo |grep 'processor'|wc -l)) - 2))" || N=1
 
@@ -121,6 +124,21 @@ function build_all()
 	gen_bl2_cfg
 	uboot_cert
 	pack_uboot
+
+	# 制作ubootenv image
+	if find ${ENV_FILE_PATH} -type f -name "uboot.env" | grep -q .;then
+		cp -f ${ENV_FILE_PATH}/uboot.env ${HR_UBOOT_OUTPUT_DIR}/tools/uboot.env
+		${HR_UBOOT_OUTPUT_DIR}/tools/mkenvimage -s 0x30000 -o ${HR_TARGET_PRODUCT_DIR}/ubootenv.img ${HR_UBOOT_OUTPUT_DIR}/tools/uboot.env
+		if [ $? -eq 0 ];then
+			echo "*********************************"
+			echo "Build ubootenv image succeeded"
+			echo "*********************************"
+		else
+			echo "*********************************"
+			echo "Build ubootenv image faild!"
+			echo "*********************************"
+		fi
+	fi
 }
 
 function pack_uboot_full()

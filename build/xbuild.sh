@@ -104,29 +104,6 @@ function build_boot {
 	build_component "boot" "${HR_LOCAL_DIR}/mk_boot.sh" "$@"
 }
 
-function build_system
-{
-	build_component "system" "${HR_LOCAL_DIR}/mk_system.sh" "$@"
-}
-
-function build_hbre
-{
-	if [ "${HR_MEDIUM_TYPE}" = "nor" ]; then
-		return
-	fi
-	build_component "hbre" "${HR_LOCAL_DIR}/mk_hbre.sh" "$@"
-}
-
-function build_app
-{
-	# tmp code
-	fs_type=$(get_part_attr system fs_type)
-	if [ "${fs_type}" = "ubifs" ]; then
-		return
-	fi
-	build_component "app" "${HR_LOCAL_DIR}/mk_app.sh" "$@"
-}
-
 function truncate_fill_image
 {
 	part_size=$(get_part_attr "${1}" "size")

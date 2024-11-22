@@ -502,7 +502,7 @@ def get_mtd_parts():
             mtd_parts += \
                 f"{part_conf['size']}@{hex(part_conf['start'])}({part_name}),"
     if mtd_parts.endswith(","):
-        mtd_parts += mtd_parts[:-1]
+        mtd_parts = mtd_parts[:-1]
     print(mtd_parts)
 
 

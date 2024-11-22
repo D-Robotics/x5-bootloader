@@ -43,6 +43,7 @@ class X5_MBR():
                   f'{RESERVED}s')   # reserved
 
     def __init__(self, _part_conf):
+        self.veeprom_addr = 0  # unused
         new_offset = 0
         if _part_conf.get('nor', None):
             part_conf = _part_conf['nor']
@@ -52,38 +53,43 @@ class X5_MBR():
             part_conf = _part_conf['emmc']
             new_offset = 20 * 1024
 
+        if not (part_conf.get('miniboot', None) and
+                part_conf.get('miniboot_bak1', None) and
+                part_conf.get('misc', None)):
+            raise ValueError("can't find miniboot|miniboot_bak1|misc")
+
+        if not (part_conf['miniboot'].get('bl2') and
+                part_conf['miniboot_bak1']['bl2']):
+            raise ValueError("can't find bl2 info in miniboot")
+
         self.nor_cfg_addr = part_conf['norcfg']['start'] - new_offset \
             if part_conf.get('norcfg', None) else 0
-        self.bl2_main_addr = part_conf['miniboot']['start'] - new_offset \
-            if part_conf.get('miniboot', None) else 0
-        self.bl2_bak1_addr = part_conf['miniboot_bak1']['start'] - new_offset \
-            if part_conf.get('miniboot_bak1', None) else 0
+        self.bl2_main_addr = part_conf['miniboot']['start'] - new_offset
+        self.bl2_bak1_addr = part_conf['miniboot_bak1']['start'] - new_offset
         self.bl2_bak2_addr = part_conf['bl2_bak2']['start'] - new_offset \
             if part_conf.get('bl2_bak2', None) else 0
         self.bl2_bak3_addr = part_conf['bl2_bak3']['start'] - new_offset \
             if part_conf.get('bl2_bak3', None) else 0
         self.bl3x_a_addr = self.bl2_main_addr + \
             part_conf['miniboot']['bl2']['size'] \
-            if part_conf.get('miniboot') and part_conf['miniboot'].get('bl2') \
-            else 0
+
         self.bl3x_b_addr = self.bl2_bak1_addr + \
             part_conf['miniboot_bak1']['bl2']['size'] \
-            if part_conf.get('miniboot_bak1') and \
-            part_conf['miniboot_bak1'].get('bl2') else 0
-        self.misc_addr = part_conf['misc']['start'] - new_offset \
-            if part_conf.get('misc', None) else 0
+
+        self.misc_addr = part_conf['misc']['start'] - new_offset
+
         if part_conf.get('uboot', None):
             self.uboot_a_addr = part_conf['uboot']['start'] - new_offset \
                 if part_conf.get('uboot', None) else 0
             self.uboot_b_addr = part_conf['uboot_bak1']['start'] - new_offset \
-                if part_conf.get('uboot_bak1', None) else 0
+                if part_conf.get('uboot_bak1', None) \
+                else part_conf['uboot']['start'] - new_offset
         else:
-            self.uboot_a_addr = part_conf['uboot_a']['start'] - new_offset \
-                if part_conf.get('uboot_a', None) else 0
-            self.uboot_b_addr = part_conf['uboot_b']['start'] - new_offset \
-                if part_conf.get('uboot_b', None) else 0
-        self.veeprom_addr = part_conf['ubootenv']['start'] - new_offset + \
-            192 * 1024 if part_conf.get('ubootenv', None) else 0
+            if not (part_conf.get('uboot_a', None) and
+                    part_conf.get('uboot_b', None)):
+                raise ValueError("can't find uboot_a or uboot_b")
+            self.uboot_a_addr = part_conf['uboot_a']['start'] - new_offset
+            self.uboot_b_addr = part_conf['uboot_b']['start'] - new_offset
 
     def to_img(self):
         mbr_body = struct.pack(self.MBR_FORMAT,

@@ -8,7 +8,9 @@
 			"size": "2m"
 		},
 		"size": "2304k",
-		"part_type": "GOLDEN",
-		"medium": "nand"
+		"part_type": "BAK",
+		"medium": "nand",
+		"ota_update_mode": "image",
+		"ota_is_update": true
 	}
 }
