@@ -4,6 +4,7 @@ link-script-dep$(sm) = $(link-out-dir$(sm))/.ta.ld.d
 
 SIGN_ENC ?= $(PYTHON3) $(ta-dev-kit-dir$(sm))/scripts/sign_encrypt.py
 TA_SIGN_KEY ?= $(ta-dev-kit-dir$(sm))/keys/default_ta.pem
+HR_BOARD_CONF_DIR ?= $(ta-dev-kit-dir$(sm))/../../../../device/horizon/x5/board_cfg/soc
 
 ifeq ($(CFG_ENCRYPT_TA),y)
 # Default TA encryption key is a dummy key derived from default
@@ -13,7 +14,7 @@ ifeq ($(CFG_ENCRYPT_TA),y)
 # Note that a user of this TA encryption feature needs to provide
 # encryption key and its handling corresponding to their security
 # requirements.
-TA_ENC_KEY ?= 'b64d239b1f3c7d3b06506229cd8ff7c8af2bb4db2168621ac62c84948468c4f4'
+TA_ENC_KEY ?= $(HR_BOARD_CONF_DIR)/bl2_cfg/user_root.key
 endif
 
 all: $(link-out-dir$(sm))/$(user-ta-uuid).dmp \
@@ -103,7 +104,7 @@ $(link-out-dir$(sm))/$(user-ta-uuid).stripped.elf: \
 
 cmd-echo$(user-ta-uuid) := SIGN   #
 ifeq ($(CFG_ENCRYPT_TA),y)
-crypt-args$(user-ta-uuid) := --enc-key $(TA_ENC_KEY)
+crypt-args$(user-ta-uuid) := --enc-key-file $(TA_ENC_KEY)
 cmd-echo$(user-ta-uuid) := SIGNENC
 endif
 $(link-out-dir$(sm))/$(user-ta-uuid).ta: \

@@ -86,9 +86,9 @@ def get_args():
                 At least public key for the commands digest, stitch, and
                 verify, else a private key''')
 
-    def arg_add_enc_key(parser):
+    def arg_add_enc_key_file(parser):
         parser.add_argument(
-            '--enc-key', required=False, help='Encryption key string')
+            '--enc-key-file', required=False, help='Encryption key string')
 
     def arg_add_enc_key_type(parser):
         parser.add_argument(
@@ -209,7 +209,7 @@ def get_args():
     arg_add_key(parser_sign_enc)
     arg_add_subkey(parser_sign_enc)
     arg_add_name(parser_sign_enc)
-    arg_add_enc_key(parser_sign_enc)
+    arg_add_enc_key_file(parser_sign_enc)
     arg_add_enc_key_type(parser_sign_enc)
     arg_add_algo(parser_sign_enc)
 
@@ -239,7 +239,7 @@ def get_args():
     arg_add_ta_version(parser_digest)
     arg_add_in(parser_digest)
     arg_add_key(parser_digest)
-    arg_add_enc_key(parser_digest)
+    arg_add_enc_key_file(parser_digest)
     arg_add_enc_key_type(parser_digest)
     arg_add_algo(parser_digest)
     arg_add_dig(parser_digest)
@@ -254,7 +254,7 @@ def get_args():
     arg_add_in(parser_stitch)
     arg_add_key(parser_stitch)
     arg_add_out(parser_stitch)
-    arg_add_enc_key(parser_stitch)
+    arg_add_enc_key_file(parser_stitch)
     arg_add_enc_key_type(parser_stitch)
     arg_add_algo(parser_stitch)
     arg_add_sig(parser_stitch)
@@ -386,14 +386,16 @@ class BinaryImage:
         h.update(self.img)
         return h.finalize()
 
-    def encrypt_ta(self, enc_key, key_type, sig_algo, uuid, ta_version):
+    def encrypt_ta(self, enc_key_file, key_type, sig_algo, uuid, ta_version):
         from cryptography.hazmat.primitives.ciphers.aead import AESGCM
         import struct
         import os
 
         self.img = self.inf
+        with open(enc_key_file, 'rb') as f:
+            enc_key = f.read()
 
-        cipher = AESGCM(bytes.fromhex(enc_key))
+        cipher = AESGCM(enc_key)
         self.nonce = os.urandom(NONCE_SIZE)
         out = cipher.encrypt(self.nonce, self.img, None)
         self.ciphertext = out[:-TAG_SIZE]
@@ -830,8 +832,8 @@ class BinaryImage:
 def load_ta_image(args):
     ta_image = BinaryImage(args.inf, args.key)
 
-    if args.enc_key:
-        ta_image.encrypt_ta(args.enc_key, args.enc_key_type,
+    if args.enc_key_file:
+        ta_image.encrypt_ta(args.enc_key_file, args.enc_key_type,
                             args.algo, args.uuid, args.ta_version)
     else:
         ta_image.set_bootstrap_ta(args.algo, args.uuid, args.ta_version)
