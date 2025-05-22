@@ -147,6 +147,8 @@ class Partition():
         self.medium = "emmc"
         self.magic = None
         self.have_anti_ver = None
+        self.fde_type = None
+        self.dm_verity = False
         self.com_v2 = {}
         self._parse(part_conf)
 
@@ -176,6 +178,8 @@ class Partition():
             'part_type_guid', self.part_type_guid)
         self.magic = part_conf.get('magic', self.magic)
         self.have_anti_ver = part_conf.get('have_anti_ver', self.have_anti_ver)
+        self.fde_type = part_conf.get('fde_type', self.fde_type)
+        self.dm_verity = part_conf.get('dm_verity', self.dm_verity)
 
         for k, v in part_conf.items():
             if isinstance(v, dict):
@@ -223,6 +227,8 @@ def convertJSON(partition_list) -> list:
         part_conf['ota_is_update'] = partition.ota_is_update
         part_conf['magic'] = partition.magic
         part_conf['have_anti_ver'] = partition.have_anti_ver
+        part_conf['fde_type'] = partition.fde_type
+        part_conf['dm_verity'] = partition.dm_verity
 
         partitions_json[partition.part_name] = part_conf
 

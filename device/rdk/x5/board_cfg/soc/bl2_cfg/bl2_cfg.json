@@ -14,7 +14,8 @@
         "force": {
             "force_enable":"false",
             "ddr_type": "lpddr4",
-            "rank_type": "single"
+            "rank_type": "single",
+            "die_dencity": 1
         },
         "ecc_enabled": "false",
         "freq": "default",

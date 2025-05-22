@@ -22,6 +22,7 @@ export MINIBOOT_TARGET_DEPLOY_DIR=${HR_TARGET_DEPLOY_DIR}/miniboot
 [ "${MINIBOOT_TARGET_DEPLOY_DIR}" != "/miniboot" ] && [ ! -d "${MINIBOOT_TARGET_DEPLOY_DIR}" ] && mkdir -p "${MINIBOOT_TARGET_DEPLOY_DIR}"
 
 export BL3_TARGET_DEPLOY_DIR=${MINIBOOT_TARGET_DEPLOY_DIR}/bl3
+export BL2_TARGET_DEPLOY_DIR=${MINIBOOT_TARGET_DEPLOY_DIR}/bl2
 
 function mk_gpt
 {
@@ -69,7 +70,7 @@ function mk_bl2
 	fi
 }
 
-function pack_bl3x
+function mk_bl3x()
 {
 	fip_tool=${HR_BUILD_TOOL_PATH}/fiptool
 
@@ -96,7 +97,174 @@ function pack_bl3x
 		}
 }
 
-function mk_bl3x
+function mk_ddr_cus
+{
+	cert_tool=${HR_BUILD_TOOL_PATH}/cert_create
+	rot_rsa_key=${HR_BOARD_CONF_DIR}/bl2_cfg/bl2_rot_prikey.pem
+
+	if [ ! -f "${cert_tool}" ]; then
+		echo "[ERROE]: ${cert_tool} is not exists"
+		exit 1
+	fi
+
+	if [ ! -d "${BL3_TARGET_DEPLOY_DIR}" ]; then
+		mkdir -p "${BL3_TARGET_DEPLOY_DIR}"
+	fi
+
+	ddr_fw="${BL3_TARGET_DEPLOY_DIR}/bl2_ddr.bin"
+	ddr_fw_key_cert="${BL3_TARGET_DEPLOY_DIR}/bl2_ddr_key.cert"
+	ddr_fw_cert="${BL3_TARGET_DEPLOY_DIR}/bl2_ddr.cert"
+	rot_rsa_key=${HR_BOARD_CONF_DIR}/bl2_cfg/bl2_rot_prikey.pem
+
+	rm -f "${ddr_fw_key_cert}" "${ddr_fw_cert}"
+
+	${cert_tool}                          \
+		-n                                \
+		--rot-key    "${rot_rsa_key}"     \
+		--tfw-nvctr 0                     \
+		--ntfw-nvctr 0                    \
+		--key-alg   rsa                   \
+		--key-size  4096                  \
+		--hash-alg  sha256                \
+		--ddr-fw-key-cert "${ddr_fw_key_cert}"  \
+		--ddr-fw-cert "${ddr_fw_cert}"  \
+		--ddr-fw "${ddr_fw}"   || {
+			echo "create ddr certificate failed"
+			exit 1
+	}
+}
+
+function mk_optee_cus
+{
+	cert_tool=${HR_BUILD_TOOL_PATH}/cert_create
+	rot_rsa_key=${HR_BOARD_CONF_DIR}/bl2_cfg/bl2_rot_prikey.pem
+
+	if [ ! -f "${cert_tool}" ]; then
+		echo "[ERROE]: ${cert_tool} is not exists"
+		exit 1
+	fi
+
+	if [ ! -d "${BL3_TARGET_DEPLOY_DIR}" ]; then
+		mkdir -p "${BL3_TARGET_DEPLOY_DIR}"
+	fi
+	tos_fw="${BL3_TARGET_DEPLOY_DIR}/tee-header_v2.bin"
+	tos_fw_extra1="${BL3_TARGET_DEPLOY_DIR}/tee-pager_v2.bin"
+	tos_fw_extra2="${BL3_TARGET_DEPLOY_DIR}/tee-pageable_v2.bin"
+	trusted_key_cert="${BL3_TARGET_DEPLOY_DIR}/trusted_key.crt"
+	tos_fw_cert="${BL3_TARGET_DEPLOY_DIR}/tos_fw_content.crt"
+	tos_fw_key_cert="${BL3_TARGET_DEPLOY_DIR}/tos_fw_key.crt"
+	rot_rsa_key=${HR_BOARD_CONF_DIR}/bl2_cfg/bl2_rot_prikey.pem
+
+	rm -f "${trusted_key_cert} ${tos_fw_cert} ${tos_fw_cert} ${tos_fw_key_cert}"
+
+	${cert_tool}                          \
+	-n                                \
+	--rot-key    "${rot_rsa_key}"   \
+	--tfw-nvctr 0                     \
+	--ntfw-nvctr 0                    \
+	--key-alg   rsa                   \
+	--key-size  4096                  \
+	--hash-alg  sha256                \
+	--tos-fw-cert "${tos_fw_cert}"  \
+	--tos-fw-key-cert "${tos_fw_key_cert}"  \
+	--tos-fw "${tos_fw}"   \
+	--tos-fw-extra1 "${tos_fw_extra1}" \
+	--tos-fw-extra2 "${tos_fw_extra2}" || {
+		echo "create optee certificate failed"
+		exit 1
+	}
+}
+
+function mk_bl31_cus
+{
+	cert_tool=${HR_BUILD_TOOL_PATH}/cert_create
+	rot_rsa_key=${HR_BOARD_CONF_DIR}/bl2_cfg/bl2_rot_prikey.pem
+
+	if [ ! -f "${cert_tool}" ]; then
+		echo "[ERROE]: ${cert_tool} is not exists"
+		exit 1
+	fi
+
+	if [ ! -d "${BL3_TARGET_DEPLOY_DIR}" ]; then
+		mkdir -p "${BL3_TARGET_DEPLOY_DIR}"
+	fi
+
+	trusted_key_cert="${BL3_TARGET_DEPLOY_DIR}/trusted_key.crt"
+	bl31_fw_cert="${BL3_TARGET_DEPLOY_DIR}/soc_fw_content.crt"
+	bl31_key_cert="${BL3_TARGET_DEPLOY_DIR}/soc_fw_key.crt"
+	bl31_fw="${BL3_TARGET_DEPLOY_DIR}/bl31.bin"
+
+	rm -f "${trusted_key_cert} ${bl31_fw_cert} ${bl31_key_cert}"
+
+	${cert_tool}                          \
+		-n                                \
+		--rot-key        "${rot_rsa_key}" \
+		--tfw-nvctr 0                     \
+		--ntfw-nvctr 0                    \
+		--key-alg   rsa                   \
+		--key-size  4096                  \
+		--hash-alg  sha256                \
+		--trusted-key-cert "${trusted_key_cert}" \
+		--soc-fw-cert "${bl31_fw_cert}"  \
+		--soc-fw-key-cert  "${bl31_key_cert}" \
+		--soc-fw "${bl31_fw}"   || {
+			echo "create bl31 certificate failed"
+			exit 1
+	}
+}
+
+function mk_bl2_cus()
+{
+	cert_tool=${HR_BUILD_TOOL_PATH}/cert_create
+	fip_tool=${HR_BUILD_TOOL_PATH}/fiptool
+	rot_rsa_key=${HR_BOARD_CONF_DIR}/bl2_cfg/bl2_rot_prikey.pem
+
+	if [ ! -f "${cert_tool}" ]; then
+		echo "[ERROE]: ${cert_tool} is not exists"
+		exit 1
+	fi
+
+	if [ ! -f "${fip_tool}" ]; then
+		echo "[ERROE]: ${fip_tool} is not exists"
+		exit 1
+	fi
+
+	if [ ! -d "${BL2_TARGET_DEPLOY_DIR}" ]; then
+		mkdir -p "${BL2_TARGET_DEPLOY_DIR}"
+	fi
+
+	for bl2_fw in "${MINIBOOT_SOURCE_DIR}/bl2/raw/"*.bin; do
+		bl2_fw_name=$(basename "${bl2_fw}" .bin)
+		bl2_trusted_key_cert="${BL2_TARGET_DEPLOY_DIR}/trusted_key.crt"
+		bl2_fw_cert="${BL2_TARGET_DEPLOY_DIR}/tb_fw.crt"
+
+		${cert_tool}                          \
+			-n                                \
+			--rot-key        "${rot_rsa_key}" \
+			--tfw-nvctr 0                     \
+			--ntfw-nvctr 0                    \
+			--key-alg   rsa                   \
+			--key-size  4096                  \
+			--hash-alg  sha256                \
+			--trusted-key-cert "${bl2_trusted_key_cert}" \
+			--tb-fw-cert "${bl2_fw_cert}"  \
+			--tb-fw "${bl2_fw}"   || {
+				echo "create bl2 certificate failed"
+				exit 1
+		}
+
+		${fip_tool} create \
+			--trusted-key-cert      "${bl2_trusted_key_cert}" \
+			--tb-fw-cert            "${bl2_fw_cert}"  \
+			--tb-fw                 "${bl2_fw}" \
+			"${MINIBOOT_TARGET_DEPLOY_DIR}/${bl2_fw_name}".img || {
+				echo "[ERROR]: ${fip_tool} ${bl2_fw_name}.img package failed"
+				exit 1
+			}
+	done
+}
+
+function prepare_bl3x()
 {
 	if [ ! -d "${BL3_TARGET_DEPLOY_DIR}" ]; then
 		mkdir -p "${BL3_TARGET_DEPLOY_DIR}"
@@ -107,8 +275,6 @@ function mk_bl3x
 	cpfiles "${MINIBOOT_SOURCE_DIR}/bl3x/bl2_ddr.bin" ${BL3_TARGET_DEPLOY_DIR}/
 	cpfiles "${MINIBOOT_SOURCE_DIR}/bl3x/bl2_ddr.cert" ${BL3_TARGET_DEPLOY_DIR}/
 	cpfiles "${MINIBOOT_SOURCE_DIR}/bl3x/bl2_ddr_key.cert" ${BL3_TARGET_DEPLOY_DIR}/
-
-	pack_bl3x
 }
 
 function truncate_fill_image
@@ -172,7 +338,15 @@ function build_all
 		mk_nor_cfg
 	fi
 	mk_mbr
-	mk_bl2
+	prepare_bl3x
+	if [ "${HR_ENABLE_CUSTOMER_KEY}" = "yes" ]; then
+		mk_bl2_cus
+		mk_ddr_cus
+		mk_optee_cus
+		mk_bl31_cus
+	else
+		mk_bl2
+	fi
 	mk_bl3x
 	mk_ta
 	pack_miniboot

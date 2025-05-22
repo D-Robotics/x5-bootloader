@@ -13,9 +13,9 @@ import os
 
 bl2_offset = struct.calcsize("QIIIIIIIII")
 bl2_feature_size = struct.calcsize("QII160s")
-ddr_input_size = struct.calcsize("7I")
+ddr_input_size = struct.calcsize("8I")
 efuse_data_size = struct.calcsize("II")
-efuse_cfg_size = struct.calcsize("QIIIIIIIIIII16sBBBBBBBBIi6I")
+efuse_cfg_size = struct.calcsize("QIIIIIIIIIII16sBBBBBBBBIi7I")
 socid_size = 16 * 100
 
 
@@ -191,12 +191,18 @@ def get_ddr_info(data):
     ddr_type = None
     rank_type = None
     freq_data = None
+    ddr_die_dencity = None
 
     ddr_adc_en = not convert_en(
         data['bl2_cfg']['ddr']['force']['force_enable'])
     ddr_type = convert_ddr_type(data['bl2_cfg']['ddr']['force']['ddr_type'])
 
     rank_type = convert_rank_type(data['bl2_cfg']['ddr']['force']['rank_type'])
+
+    if data['bl2_cfg']['ddr']['force'].get('die_dencity', None):
+        ddr_die_dencity = data['bl2_cfg']['ddr']['force']['die_dencity']
+    else:
+        ddr_die_dencity = 1
 
     ecc_enabled = convert_en(data['bl2_cfg']['ddr']['ecc_enabled'])
 
@@ -224,16 +230,19 @@ def get_ddr_info(data):
                 ddr_adc_en = 0
                 ddr_type = 1
                 rank_type = 1
+                ddr_die_dencity = 1
                 ddr_freq = 3200
                 ecc_enabled = 0
             elif hb_ddr_attr.lower() == '4gddr':
                 ddr_adc_en = 0
                 ddr_type = 1
                 rank_type = 2
+                ddr_die_dencity = 1
                 ddr_freq = 3733
                 ecc_enabled = 0
 
-    return ddr_adc_en, ddr_type, rank_type, ddr_freq, ecc_enabled, diag_test
+    return ddr_adc_en, ddr_type, rank_type, ddr_freq, ecc_enabled, diag_test, \
+        ddr_die_dencity
 
 
 def save_hash_words_to_file(key_data, output_file):
@@ -303,7 +312,16 @@ def generate_binary_from_json(input_file, key_file, user_rot_key_file,
 
     gpio_cfg = get_bl2_gpio_info(data['bl2_cfg']['feature']['gpio_cfg'])
 
-    sec_en = convert_en(data['bl2_cfg']['efuse_cfg']['secure_boot'])
+    if data['bl2_cfg']['efuse_cfg'].get('secure_boot_all', None):
+        sec_en_all = convert_en(
+            data['bl2_cfg']['efuse_cfg']['secure_boot_all'])
+        if sec_en_all == 0:
+            sec_en = convert_en(data['bl2_cfg']['efuse_cfg']['secure_boot'])
+        else:
+            sec_en = 0
+    else:
+        sec_en_all = 0
+        sec_en = convert_en(data['bl2_cfg']['efuse_cfg']['secure_boot'])
 
     burn_user_rot_key_en = convert_en(
         data['bl2_cfg']['efuse_cfg']['burn_user_rot_key'])
@@ -322,16 +340,15 @@ def generate_binary_from_json(input_file, key_file, user_rot_key_file,
     delay_before = data['bl2_cfg']['efuse_cfg']['delay_before_efuse']
     delay_after = data['bl2_cfg']['efuse_cfg']['delay_after_efuse']
 
-    key_hash = calculate_public_key_hash(key_file)
+    _key_hash = calculate_public_key_hash(key_file)
+    if sec_en == 1 or sec_en_all == 1:
+        key_hash = _key_hash
+    else:
+        key_hash = b'\x00' * 32
 
     directory_path = os.path.dirname(output_file)
     hash_file = os.path.join(directory_path, 'pubkey-hash.txt')
-    save_hash_words_to_file(key_hash, hash_file)
-
-    if sec_en == 1:
-        key_hash = calculate_public_key_hash(key_file)
-    else:
-        key_hash = b'\x00' * 32
+    save_hash_words_to_file(_key_hash, hash_file)
 
     if burn_user_rot_key_en == 1:
         with open(user_rot_key_file, "rb") as f:
@@ -343,11 +360,12 @@ def generate_binary_from_json(input_file, key_file, user_rot_key_file,
 
     cus_non_secure = struct.unpack("6I", parse_nonsecure_efuse(data))
 
-    ddr_adc_en, ddr_type, rank_type, ddr_freq, ecc_enabled, diag_test = \
+    ddr_adc_en, ddr_type, rank_type, ddr_freq, ecc_enabled, diag_test, \
+        ddr_die_dencity = \
         get_ddr_info(data)
 
     bl2_cfg_data = struct.pack("<QIIIIIIIIIQII160sQIIIIIIIIIII16sBBBBBBBBIi"
-                               "6I7I",
+                               "7I8I",
                                int.from_bytes(b"HBBL2CFG", byteorder='little'),
                                0,  # Placeholder for checksum
                                feature_offset,
@@ -373,19 +391,21 @@ def generate_binary_from_json(input_file, key_file, user_rot_key_file,
                                delay_before,
                                delay_after,
                                *cus_non_secure,
+                               sec_en_all,
                                ddr_adc_en,
                                data['bl2_cfg']['ddr']['detect']['adc_channel'],
                                ddr_type,
                                rank_type,
                                ddr_freq,
                                ecc_enabled,
-                               diag_test)
+                               diag_test,
+                               ddr_die_dencity)
 
     checksum = calculate_checksum(bl2_cfg_data)
     socid_file = "tmp_socid.bin"
     checksum += parse_socid(input_file, socid_file)
     bl2_cfg_data = struct.pack("<QIIIIIIIIIQII160sQIIIIIIIIIII16sBBBBBBBBIi"
-                               "6I7I",
+                               "7I8I",
                                int.from_bytes(b"HBBL2CFG", byteorder='little'),
                                checksum,  # Placeholder for checksum
                                feature_offset,
@@ -411,13 +431,15 @@ def generate_binary_from_json(input_file, key_file, user_rot_key_file,
                                delay_before,
                                delay_after,
                                *cus_non_secure,
+                               sec_en_all,
                                ddr_adc_en,
                                data['bl2_cfg']['ddr']['detect']['adc_channel'],
                                ddr_type,
                                rank_type,
                                ddr_freq,
                                ecc_enabled,
-                               diag_test)
+                               diag_test,
+                               ddr_die_dencity)
 
     with open(output_file, 'wb') as output_file_part:
         output_file_part.write(bl2_cfg_data)

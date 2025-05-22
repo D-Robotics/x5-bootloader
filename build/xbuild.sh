@@ -118,7 +118,7 @@ function truncate_fill_image
 	# FIXME: If there is actual data in the partition behind the mirror, pack will be skipped.
 	# 先固定跳过log和userdata分区，要优化成根据配置来找到最后一个有数据的分区
 	case "${part_name}" in
-		log*|userdata*)
+		log*|userdata*|private*)
 			rm -f "${HR_TARGET_PRODUCT_DIR}/${part_name}".img
 			if [ "${part_medium}" == "emmc" ]; then
 				echo "[INFO]: Skip pack partition: ${part_name}"
@@ -267,23 +267,45 @@ function build_pack
 	return 0
 }
 
+function otapackage_help() {
+	script_name=$(basename "$0")
+	echo -e "=================================================================================="
+	echo -e "   \\  //   Welcome to the OTA Package Build System!"
+	echo -e "    \\//    Working directory: $(pwd)"
+	echo -e "    //\\                                             "
+	echo -e "   //  \\                                            "
+	echo -e "=================================================================================="
+	echo "Available commands for $script_name:"
+	echo "./$script_name otapackage [image | image_diff | all | help] [path]"
+	echo
+	echo "Support functions:"
+	echo -e "\thelp              Displays this help message."
+	echo -e "\timage|all         Generate an all_in_one.zip package."
+	echo -e "\timage_diff [path] Generate a differential OTA package using the specified path."
+	echo
+	echo "Usage example:"
+	echo -e "\t./$script_name otapackage image"
+	echo -e "\t./$script_name otapackage all"
+	echo -e "\t./$script_name otapackage image_diff /path/to/diff"
+	echo -e "\t./$script_name otapackage help"
+	echo -e "=================================================================================="
+	echo -e "Note:"
+	echo -e "  1. If no command is provided, the default action will be 'all'."
+	echo -e "  2. The [path] argument must be a valid file path for differential OTA."
+	echo -e "=================================================================================="
+	exit 0
+}
+
 function build_otapackage()
 {
 	local deploy_otapack_dir=${HR_TARGET_DEPLOY_DIR}/ota_packages
 	local src_ota_tool_dir=${HR_BUILD_TOOL_PATH}/ota_tools
 	local product_ota_dir=${HR_TARGET_PRODUCT_DIR}/ota_packages
-
-	print_help() {
-		echo "Usage:"
-		echo "    ./bd.sh otapackage"
-		echo "        create all_in_one ota packages"
-		echo "    ./bd.sh otapackage --help"
-		echo "        help information"
-	}
+	local diffpatch_dir=${src_ota_tool_dir}/ota_diff_tool
 
     echo "==========Start begin otapackage==========="
 	case "$1" in
-		"all")
+		"all"|"image")
 			echo "create all_in_one.zip "
 			${src_ota_tool_dir}/mk_otapackage.py sys_pkg \
 				--partition_file "${HR_TARGET_PRODUCT_DIR}/${HR_PART_CONF_FILENAME##*/}" \
@@ -293,13 +315,38 @@ function build_otapackage()
 				--sign_key "${src_ota_tool_dir}"/keys/private_key.pem \
 				--out_dir "${product_ota_dir}/"
 			;;
+		"image_diff")
+			if [ $# -ne 2 ]; then
+				echo Error: Invalid number of arguments. Please provide exactly 2 arguments.
+				otapackage_help
+				exit 1
+			fi
+
+			old_pkg_path=$(realpath "$2")
+
+			if [ ! -f "$old_pkg_path" ]; then
+				echo "Error: The file '$old_pkg_path' does not exist. Please check the path and try again."
+				exit 1
+			fi
+
+			echo "create all_in_one.zip "
+			${src_ota_tool_dir}/mk_otapackage.py sys_pkg_inc \
+				--partition_file "${HR_TARGET_PRODUCT_DIR}/${HR_PART_CONF_FILENAME##*/}" \
+				--ota_process "${deploy_otapack_dir}"/tools/ota_process \
+				--image_dir "${HR_TARGET_PRODUCT_DIR}/" \
+				--prepare_dir "${deploy_otapack_dir}/" \
+				--sign_key "${src_ota_tool_dir}"/keys/private_key.pem \
+				--out_dir "${product_ota_dir}/" \
+				--old_pkg "${old_pkg_path}" \
+				--diffpatch_dir "${diffpatch_dir}/"
+			;;
 		"help")
-			print_help
+			otapackage_help
 			exit 0
 			;;
 		*)
 			echo "Unknown cmd: $1"
-			print_help
+			otapackage_help
 			exit 1
 			;;
 	esac
