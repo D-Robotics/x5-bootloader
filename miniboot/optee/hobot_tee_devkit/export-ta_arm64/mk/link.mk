@@ -5,7 +5,6 @@ link-script-dep$(sm) = $(link-out-dir$(sm))/.ta.ld.d
 SIGN_ENC ?= $(PYTHON3) $(ta-dev-kit-dir$(sm))/scripts/sign_encrypt.py
 TA_SIGN_KEY ?= $(ta-dev-kit-dir$(sm))/keys/default_ta.pem
 HR_BOARD_CONF_DIR ?= $(ta-dev-kit-dir$(sm))/../../../../device/horizon/x5/board_cfg/soc
-
 ifeq ($(CFG_ENCRYPT_TA),y)
 # Default TA encryption key is a dummy key derived from default
 # hardware unique key (an array of 16 zero bytes) to demonstrate

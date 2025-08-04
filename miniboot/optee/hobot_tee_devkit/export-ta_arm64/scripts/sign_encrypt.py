@@ -392,10 +392,11 @@ class BinaryImage:
         import os
 
         self.img = self.inf
+
         with open(enc_key_file, 'rb') as f:
             enc_key = f.read()
-
         cipher = AESGCM(enc_key)
+
         self.nonce = os.urandom(NONCE_SIZE)
         out = cipher.encrypt(self.nonce, self.img, None)
         self.ciphertext = out[:-TAG_SIZE]
