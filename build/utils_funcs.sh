@@ -253,3 +253,11 @@ function strip_elf() {
 		fi
 	done
 }
+
+function check_value_0_63()
+{
+	if [ "$1" -lt 0 ] || [ "$1" -gt 64 ]; then
+		echo "Error: antirollback version must be between 0 and 64. current $1"
+		exit 1
+	fi
+}

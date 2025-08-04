@@ -24,6 +24,16 @@ export MINIBOOT_TARGET_DEPLOY_DIR=${HR_TARGET_DEPLOY_DIR}/miniboot
 export BL3_TARGET_DEPLOY_DIR=${MINIBOOT_TARGET_DEPLOY_DIR}/bl3
 export BL2_TARGET_DEPLOY_DIR=${MINIBOOT_TARGET_DEPLOY_DIR}/bl2
 
+if [ -n "${ANTIROLLBACK_SEC_VER}" ] && [ -n "${ANTIROLLBACK_NOSEC_VER}" ]; then
+	local_anti_sec_ver=${ANTIROLLBACK_SEC_VER}
+	local_anti_nosec_ver=${ANTIROLLBACK_NOSEC_VER}
+	check_value_0_63 "${local_anti_sec_ver}"
+	check_value_0_63 "${local_anti_nosec_ver}"
+else
+	local_anti_sec_ver=0
+	local_anti_nosec_ver=0
+fi
+
 function mk_gpt
 {
 	${HR_PARTITION_TOOL_PATH}/gen_gpt.py \
@@ -121,8 +131,8 @@ function mk_ddr_cus
 	${cert_tool}                          \
 		-n                                \
 		--rot-key    "${rot_rsa_key}"     \
-		--tfw-nvctr 0                     \
-		--ntfw-nvctr 0                    \
+		--tfw-nvctr  "${local_anti_sec_ver}"     \
+		--ntfw-nvctr  "${local_anti_nosec_ver}"  \
 		--key-alg   rsa                   \
 		--key-size  4096                  \
 		--hash-alg  sha256                \
@@ -160,8 +170,8 @@ function mk_optee_cus
 	${cert_tool}                          \
 	-n                                \
 	--rot-key    "${rot_rsa_key}"   \
-	--tfw-nvctr 0                     \
-	--ntfw-nvctr 0                    \
+	--tfw-nvctr  "${local_anti_sec_ver}"     \
+	--ntfw-nvctr  "${local_anti_nosec_ver}"  \
 	--key-alg   rsa                   \
 	--key-size  4096                  \
 	--hash-alg  sha256                \
@@ -199,8 +209,8 @@ function mk_bl31_cus
 	${cert_tool}                          \
 		-n                                \
 		--rot-key        "${rot_rsa_key}" \
-		--tfw-nvctr 0                     \
-		--ntfw-nvctr 0                    \
+		--tfw-nvctr  "${local_anti_sec_ver}"     \
+		--ntfw-nvctr  "${local_anti_nosec_ver}"  \
 		--key-alg   rsa                   \
 		--key-size  4096                  \
 		--hash-alg  sha256                \
@@ -235,18 +245,16 @@ function mk_bl2_cus()
 
 	for bl2_fw in "${MINIBOOT_SOURCE_DIR}/bl2/raw/"*.bin; do
 		bl2_fw_name=$(basename "${bl2_fw}" .bin)
-		bl2_trusted_key_cert="${BL2_TARGET_DEPLOY_DIR}/trusted_key.crt"
 		bl2_fw_cert="${BL2_TARGET_DEPLOY_DIR}/tb_fw.crt"
 
 		${cert_tool}                          \
 			-n                                \
 			--rot-key        "${rot_rsa_key}" \
-			--tfw-nvctr 0                     \
-			--ntfw-nvctr 0                    \
+			--tfw-nvctr  "${local_anti_sec_ver}"     \
+			--ntfw-nvctr  "${local_anti_nosec_ver}"  \
 			--key-alg   rsa                   \
 			--key-size  4096                  \
 			--hash-alg  sha256                \
-			--trusted-key-cert "${bl2_trusted_key_cert}" \
 			--tb-fw-cert "${bl2_fw_cert}"  \
 			--tb-fw "${bl2_fw}"   || {
 				echo "create bl2 certificate failed"
@@ -254,7 +262,6 @@ function mk_bl2_cus()
 		}
 
 		${fip_tool} create \
-			--trusted-key-cert      "${bl2_trusted_key_cert}" \
 			--tb-fw-cert            "${bl2_fw_cert}"  \
 			--tb-fw                 "${bl2_fw}" \
 			"${MINIBOOT_TARGET_DEPLOY_DIR}/${bl2_fw_name}".img || {
