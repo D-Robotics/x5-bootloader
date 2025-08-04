@@ -34,6 +34,16 @@ else
 	BUILD_OPTIONS="ARCH=${HR_ARCH_UBOOT} O=${HR_UBOOT_OUTPUT_DIR}"
 fi
 
+if [ -n "${ANTIROLLBACK_SEC_VER}" ] && [ -n "${ANTIROLLBACK_NOSEC_VER}" ]; then
+	local_anti_sec_ver=${ANTIROLLBACK_SEC_VER}
+	local_anti_nosec_ver=${ANTIROLLBACK_NOSEC_VER}
+	check_value_0_63 "${local_anti_sec_ver}"
+	check_value_0_63 "${local_anti_nosec_ver}"
+else
+	local_anti_sec_ver=0
+	local_anti_nosec_ver=0
+fi
+
 function gen_bl2_cfg()
 {
 	python3 "${HR_BUILD_TOOL_PATH}/bl2_cfg.py"  \
@@ -62,8 +72,8 @@ function uboot_cert()
 	${cert_tool}                          \
 		-n                                \
 		--bl2-rot-key    ${bl2_rot_key}   \
-		--tfw-nvctr    0                  \
-		--ntfw-nvctr    0                 \
+		--tfw-nvctr  "${local_anti_sec_ver}"     \
+		--ntfw-nvctr  "${local_anti_nosec_ver}"  \
 		--key-alg   rsa                   \
 		--key-size  4096                  \
 		--hash-alg  sha256                \

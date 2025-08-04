@@ -103,11 +103,14 @@ class env_setup:
         self.gpt_config = os.getenv(
             'HR_PART_CONF_FILENAME', './x5-soc-debug-gpt.json')
         self.out_gpt_config = os.getenv(
-            'HR_TARGET_PRODUCT_DIR', './out') + "/" + os.path.basename(self.gpt_config)
-
+            'HR_TARGET_PRODUCT_DIR', './out') + "/" + \
+            os.path.basename(self.gpt_config)
+        self.sec_update = os.getenv('ANTIROLLBACK_SEC_UPDATE', "false") \
+            .lower() in ('1', 'true', 'yes')
+        self.nosec_update = os.getenv('ANTIROLLBACK_NOSEC_UPDATE', "false") \
+            .lower() in ('1', 'true', 'yes')
 
 g_env = env_setup()
-
 
 LINUX_FS_TYPE = ['ext4', 'ext3', 'ext2', 'yaffs2', 'ubifs', 'jffs2']
 MS_FS_TYPE = ['vfat', 'ntfs', 'fat32', 'exfat']
@@ -260,14 +263,11 @@ class Partition_Table():
         self.nand_partitions_list = []
         self.emmc_partitions_list = []
         self.part_global = None
-        self.backup_slot_count = None
-        self.AB_part_a = None
-        self.AB_part_b = None
-        self.BAK_part_bak = None
-        self.backup_dir = None
 
     def append_global_config(self, global_conf):
         self.part_global = {
+            "nosec_antirollback_update": False,
+            "sec_antirollback_update": False,
             "backup_slot_count": 2,
             # "backup_dir": "/userdata/ota/backup_dir",
             "AB_part_a": "_a",
@@ -275,18 +275,17 @@ class Partition_Table():
             "BAK_part_bak": "_bak",
             "sys_version": f"{get_sys_ver()}",
         }
-        self.backup_slot_count = global_conf.get('backup_slot_count',
-                                                 self.part_global[
-                                                     'backup_slot_count'])
-        self.AB_part_a = global_conf.get('AB_part_a',
-                                         self.part_global[
-                                             'AB_part_a'])
-        self.AB_part_b = global_conf.get('AB_part_b',
-                                         self.part_global[
-                                             'AB_part_b'])
-        self.BAK_part_bak = global_conf.get('BAK_part_bak',
-                                            self.part_global[
-                                                'BAK_part_bak'])
+        self.part_global["backup_slot_count"] = \
+            global_conf.get('backup_slot_count',
+                            self.part_global['backup_slot_count'])
+        self.part_global["AB_part_a"] = \
+            global_conf.get('AB_part_a', self.part_global['AB_part_a'])
+        self.part_global["AB_part_b"] = \
+            global_conf.get('AB_part_b', self.part_global['AB_part_b'])
+        self.part_global["BAK_part_bak"] = \
+            global_conf.get('BAK_part_bak', self.part_global['BAK_part_bak'])
+        self.part_global["nosec_antirollback_update"] = g_env.nosec_update
+        self.part_global["sec_antirollback_update"] = g_env.nosec_update
 
     def _append_part(self, part_name, part_conf) -> None:
         if part_conf.get("medium", None) and part_conf['medium'] == "emmc":
@@ -306,15 +305,16 @@ class Partition_Table():
     def append_part(self, part_name, part_conf) -> None:
         part_conf['base_name'] = part_name
         if part_conf.get("part_type", None) and part_conf['part_type'] == "AB":
-            part_name_A = part_name + self.AB_part_a
+            part_name_A = part_name + self.part_global["AB_part_a"]
             self._append_part(part_name_A, part_conf)
-            part_name_B = part_name + self.AB_part_b
+            part_name_B = part_name + self.part_global["AB_part_b"]
             self._append_part(part_name_B, part_conf)
         elif (part_conf.get("part_type", None) and
                 part_conf['part_type'] == "BAK"):
             self._append_part(part_name, part_conf)
-            for i in range(1, self.backup_slot_count):
-                bak_part_name = part_name + self.BAK_part_bak + str(i)
+            for i in range(1, self.part_global["backup_slot_count"]):
+                bak_part_name = part_name \
+                    + self.part_global["BAK_part_bak"] + str(i)
                 self._append_part(bak_part_name, part_conf)
         else:
             self._append_part(part_name, part_conf)
